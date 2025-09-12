@@ -1,0 +1,11 @@
+{
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8010
+  },
+  "tools": {
+    "detect_emotion": {
+      "description": "Capture a photo using the device's camera, and return the picture's emotion"
+    }
+  }
+}
