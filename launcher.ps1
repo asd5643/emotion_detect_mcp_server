@@ -358,61 +358,6 @@ function Stop-LemonadeServer {
   Write-Log "Lemonade Server stop requested."
 }
 
-function Start-PythonApp {
-  if (-not $PythonAppPath -or -not (Test-Path $PythonAppPath)) {
-    Write-Log "Python app path not set or not found: $PythonAppPath"
-    return
-  }
-  #if (-not (Test-Path $CondaBat)) {
-  #  Write-Log "conda.bat not found at $CondaBat"
-  #  return
-  #}
-  if ($script:PythonProc -and -not $script:PythonProc.HasExited) {
-    Write-Log "Python App GUI already running (PID $($script:PythonProc.Id))."
-    return
-  }
-
-  $guiClient = Join-Path $PSScriptRoot "gui_client.py"
-
-  if (-not (Test-Path $guiClient)) {
-      Write-Host "GUI client not found: $guiClient"
-      return
-  }
-
-  if (-not (Test-Path $PythonAppPath)) {
-      Write-Host "Python App not found: $PythonAppPath"
-      return
-  }
-
-  Write-Log "Starting GUI Client for Python App ..."
-  $pythonExe = "python"
-
-  $proc = New-Object System.Diagnostics.Process
-  $proc.StartInfo.FileName = $pythonExe
-  $proc.StartInfo.Arguments = "`"$guiClient`" `"$PythonAppPath`""  # ← 一定要帶上 Python App 路徑
-  $proc.StartInfo.UseShellExecute = $false
-  $proc.StartInfo.RedirectStandardOutput = $true
-  $proc.StartInfo.RedirectStandardError = $true
-  $proc.StartInfo.CreateNoWindow = $true
-
-  $proc.Start() | Out-Null
-  Write-Log "Python App GUI PID: $($proc.Id)"
-
-  # 等待 GUI Client 輸出第一行訊息
-  while (-not $proc.HasExited) {
-      $line = $proc.StandardOutput.ReadLine()
-      if ($line) {
-          Write-Host "收到訊息: $line"
-          
-          # 收到訊息後立即結束 launcher
-          if (-not $proc.HasExited) { $form.Close() }
-          Write-Host "Launcher 結束"
-          break
-      }
-  }
-}
-
-
 function Start-PythonApp-AfterDelay {
   param([int]$Seconds = 10)
   if (-not $PythonAppPath -or -not (Test-Path $PythonAppPath)) {
@@ -497,6 +442,61 @@ function Stop-All {
   Stop-MySQLContainer
   Write-Log "=== STOP DONE ===  (Docker Desktop still running; use 'Quit Docker Desktop' if needed)"
 }
+
+function Start-PythonApp {
+  if (-not $PythonAppPath -or -not (Test-Path $PythonAppPath)) {
+    Write-Log "Python app path not set or not found: $PythonAppPath"
+    return
+  }
+  #if (-not (Test-Path $CondaBat)) {
+  #  Write-Log "conda.bat not found at $CondaBat"
+  #  return
+  #}
+  if ($script:PythonProc -and -not $script:PythonProc.HasExited) {
+    Write-Log "Python App GUI already running (PID $($script:PythonProc.Id))."
+    return
+  }
+
+  $guiClient = Join-Path $PSScriptRoot "gui_client.py"
+
+  if (-not (Test-Path $guiClient)) {
+      Write-Host "GUI client not found: $guiClient"
+      return
+  }
+
+  if (-not (Test-Path $PythonAppPath)) {
+      Write-Host "Python App not found: $PythonAppPath"
+      return
+  }
+
+  Write-Log "Starting GUI Client for Python App ..."
+  $pythonExe = "python"
+
+  $proc = New-Object System.Diagnostics.Process
+  $proc.StartInfo.FileName = $pythonExe
+  $proc.StartInfo.Arguments = "`"$guiClient`" `"$PythonAppPath`""  # ← 一定要帶上 Python App 路徑
+  $proc.StartInfo.UseShellExecute = $false
+  $proc.StartInfo.RedirectStandardOutput = $true
+  $proc.StartInfo.RedirectStandardError = $true
+  $proc.StartInfo.CreateNoWindow = $true
+
+  $proc.Start() | Out-Null
+  Write-Log "Python App GUI PID: $($proc.Id)"
+
+  # 等待 GUI Client 輸出第一行訊息
+  while (-not $proc.HasExited) {
+      $line = $proc.StandardOutput.ReadLine()
+      if ($line) {
+          Write-Host "收到訊息: $line"
+          
+          # 收到訊息後立即結束 launcher
+          if (-not $proc.HasExited) { Stop-All; $form.Close() }
+          Write-Host "Launcher 結束"
+          break
+      }
+  }
+}
+
 # --------------------------------
 
 # ------------ WinForms UI (no focus rectangles on buttons) ------------
